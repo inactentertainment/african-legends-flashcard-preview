@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flashcards Preview</title>
+
+<style>
+  :root{
+    --al-yellow: #ffff00;
+    --al-black: #000000;
+    --al-white: #ffffff;
+  }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--al-black);
+    color: var(--al-white);
+    font-family: Arial, sans-serif;
+  }
+
+  .al-wrap{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 14px 10px 18px;
+  }
+
+  .al-stage{
+    display:flex;
+    justify-content:center;
+  }
+
+  .al-card{
+    position: relative;
+    width: min(92vw, 520px);
+    aspect-ratio: 8.5 / 11;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--al-black);
+
+    box-shadow:
+      0 0 0 1px rgba(255,255,0,.90),
+      0 18px 44px rgba(0,0,0,.72);
+    transform: perspective(1100px) translateZ(0);
+    transition: transform .18s ease, box-shadow .18s ease;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+  }
+
+  .al-card:hover{
+    transform: perspective(1100px) translateY(-4px) rotateX(1deg) rotateY(-1deg);
+    box-shadow:
+      0 0 0 1px rgba(255,255,0,.98),
+      0 26px 58px rgba(0,0,0,.78);
+  }
+
+  .al-card:focus{
+    box-shadow:
+      0 0 0 2px rgba(255,255,0,.98),
+      0 26px 58px rgba(0,0,0,.78);
+  }
+
+  .al-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit: contain;
+    background: var(--al-black);
+  }
+
+  .al-controls{
+    display:flex;
+    justify-content:center;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .al-btn{
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(18,18,18,.95);
+    color: var(--al-white);
+    cursor:pointer;
+    font-weight: 800;
+    letter-spacing: .2px;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  }
+
+  .al-btn:hover{
+    transform: translateY(-1px);
+    background: rgba(26,26,26,.98);
+    border-color: rgba(255,255,255,.26);
+  }
+
+  .al-btn:disabled{
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .al-btn-flip{
+    border-color: rgba(255,255,0,.90);
+  }
+
+  .al-meta{
+    text-align:center;
+    margin-top: 10px;
+  }
+
+  .al-counter{
+    font-weight: 800;
+    opacity: .9;
+    margin-bottom: 6px;
+  }
+
+  .al-help{
+    font-size: 13px;
+    opacity: .75;
+  }
+</style>
+</head>
+
+<body>
+  <div class="al-wrap">
+    <div class="al-stage">
+      <div class="al-card" id="alCard" role="button" tabindex="0" aria-label="Flashcard, press Flip or click the card">
+        <img id="alImg" class="al-img" src="" alt="Flashcard">
+      </div>
+    </div>
+
+    <div class="al-controls">
+      <button class="al-btn" id="alPrev" type="button">Prev</button>
+      <button class="al-btn al-btn-flip" id="alFlip" type="button">Flip</button>
+      <button class="al-btn" id="alNext" type="button">Next</button>
+    </div>
+
+    <div class="al-meta">
+      <div class="al-counter" id="alCounter">Card 1 of 10</div>
+      <div class="al-help">Tap or click the card to flip. Use Prev and Next to move through the preview.</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // Direct image URLs from your file IDs
+  const ids = [
+    "11V2tuMIAyph2N4tHUFQivjyw0pNNeJxe",
+    "19hyI_NQiFetY2NRbLrvWZ3fHaee5MBD4",
+    "1cKKdVgqD6JwNIUQNcyj-mlInPGNZDP55",
+    "1bH-KSaz4IDRAo5fLVb8FRLWpbBLS6508",
+    "122SiYxHNl3rINGf3y4MwU7tTt1266KLd",
+    "13lKQCCnvyuiAfBQYviBvDbNt4ZeNNha3",
+    "1zxdolPYj9nvD3QAv_7rmhL0J44d_Ls2z",
+    "1u6bNZDVTGGp31aKoaCZnVdeYtlLkMYcZ",
+    "19UI978YfdhjTfkihCrb62EoxacFEvVLj",
+    "1gLtm6Qzrlsb7yH2z5Fz4RNbuAoNLLfgg",
+    "1DQZzh-r8QWxOMynVb5sOT36pe2sUucf_",
+    "1YYrUD8tb1LAJ-XzQg9lIBzK-NBcPF9d_",
+    "13sca2oe3quhOZGdXdQLExa9pBeD7lVI6",
+    "1k2HAJKzExCH2bYWLLaTFpd9n1tekyeqC",
+    "11KDWDD4VQuKbL7JooVc4rGWNvknp5CEl",
+    "109aIoW4vEXGxN2MQ8aTO2uiSuWpkhEM0",
+    "1JJGnmisTiokacU1X1BhTLBp_3h5wO2oQ",
+    "18q1F2OFU-WyeyCKlun70Fp9DH4bdHhJ4",
+    "1nbrbuQzpdpN1hOsGjAfyTnpb4gEheAii",
+    "1o9yVDt9xFgTOe5t_hgrSrbSU4VQ-Ssl5"
+  ];
+
+  function imgUrl(id){
+    return "https://drive.google.com/uc?export=view&id=" + encodeURIComponent(id);
+  }
+
+  const cards = [];
+  for(let k = 0; k < ids.length; k += 2){
+    cards.push({ front: imgUrl(ids[k]), back: imgUrl(ids[k + 1]) });
+  }
+
+  let i = 0;
+  let showingFront = true;
+
+  const cardEl = document.getElementById("alCard");
+  const imgEl = document.getElementById("alImg");
+  const counterEl = document.getElementById("alCounter");
+  const prevBtn = document.getElementById("alPrev");
+  const nextBtn = document.getElementById("alNext");
+  const flipBtn = document.getElementById("alFlip");
+
+  function render(){
+    const c = cards[i];
+    imgEl.src = showingFront ? c.front : c.back;
+    counterEl.textContent = "Card " + (i + 1) + " of " + cards.length;
+    prevBtn.disabled = (i === 0);
+    nextBtn.disabled = (i === cards.length - 1);
+  }
+
+  function flip(){ showingFront = !showingFront; render(); }
+  function next(){ if(i < cards.length - 1){ i += 1; showingFront = true; render(); } }
+  function prev(){ if(i > 0){ i -= 1; showingFront = true; render(); } }
+
+  cardEl.addEventListener("click", flip);
+  flipBtn.addEventListener("click", flip);
+  nextBtn.addEventListener("click", next);
+  prevBtn.addEventListener("click", prev);
+
+  cardEl.addEventListener("keydown", (e) => {
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); flip(); }
+    if(e.key === "ArrowRight"){ next(); }
+    if(e.key === "ArrowLeft"){ prev(); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
